@@ -2,8 +2,6 @@ import subprocess
 import sys
 import os
 import platform
-import tkinter as tk
-from tkinter import filedialog
 
 # get ffmpeg.exe if on windows or use golabl version if not
 def get_ffmpeg():
@@ -15,21 +13,6 @@ def get_ffmpeg():
         return os.path.join(os.path.dirname(__file__), 'ffmpeg.exe')
 
     return "ffmpeg"
-
-# file browser
-def select_file():
-    filepath = filedialog.askopenfilename()
-    if filepath:
-        print(f"Selected file: {filepath}")
-
-root = tk.Tk()
-root.title("File Browser Example")
-
-browse_button = tk.Button(root, text="Browse File", command=select_file)
-browse_button.pack(pady=20)
-
-root.mainloop()
-
 
 ffmpeg = None
 
