@@ -6,4 +6,4 @@
 
 -  The program uses **stream copy** method, making the conversion; very fast, with no quality loss and uses minimal hardware usage.
 
--  You can convert an entire movie to mp4 format in an instant on low spec hardware.
+-  You can convert an entire movie into mp4 format in an instant on low spec hardware.
