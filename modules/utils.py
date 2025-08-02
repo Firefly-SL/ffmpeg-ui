@@ -23,8 +23,34 @@ def defualt_path():
     else:
         return os.path.expanduser("~") 
 
+def change_filename(base_name, extension):
+    counter = 1
+    candidate = f"{base_name}_converted.{extension}"
+    while os.path.exists(candidate):
+        candidate = f"{base_name}_converted_{counter}.{extension}"
+        counter += 1
+    return candidate
+
 
 # simple converter
 def convert_video(input_file, output_format, ffmpeg):
     output_file = input_file.rsplit(".", 1)[0] + "_converted." + output_format
-    subprocess.run([ffmpeg, "-i", input_file, "-c", "copy", output_file])
+
+    if os.path.exists(output_file):
+        output_file = change_filename(base_name=input_file.rsplit(".", 1)[0], extension=output_format)
+    
+    try:
+        subprocess.run(
+            [ffmpeg, "-i", input_file, "-c", "copy", output_file],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        return f"File converted as: {output_file}"
+    except FileNotFoundError:
+        return "Error: ffmpeg executable not found. Report this error."
+    except subprocess.CalledProcessError as e:
+        return f"ffmpeg encountered an error:\n{e.stderr}" #important
+    except Exception as e:
+        return f"An unexpected error occurred: {e}"
