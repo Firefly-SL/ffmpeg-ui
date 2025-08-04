@@ -21,11 +21,8 @@ class GUI:
         self.root = tk.Tk()
         self.root.title(title)
         self.root.configure(bg=bg1)
-
-        # Frame to center objects
-        # button_frame = tk.Frame(self.root)
-        # button_frame.pack(expand=True)
-        # Calling window centering method
+        #removing title bar
+        self.root.overrideredirect(True)
         self.center_window(width,height)
 
         self.filepath = None
@@ -34,6 +31,12 @@ class GUI:
         self.timer_running = False
 
 
+        # -------- TITLE BAR FRAME (Buttons) --------
+        title_frame = tk.Frame(self.root, relief="raised", bg=bg1)
+        title_frame.pack(fill="x")
+
+        title_label = tk.Label(title_frame, text="Nameless Convertor", bg=bg1, fg=text1)
+        title_label.pack(side="left", pady=4, padx=3)
 
         # -------- TOP FRAME (Buttons) --------
         top_frame = tk.Frame(self.root, bg=bg1)
@@ -60,7 +63,7 @@ class GUI:
         self.stopwatch_label = tk.Label(bottom_frame, text="Time: 0.000", bg=bg1, fg=text1)
         self.stopwatch_label.pack(side="left")
 
-
+# -----------------------------------------------------
 
     # Window centering method
     def center_window(self, width, height):
