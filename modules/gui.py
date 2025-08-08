@@ -7,7 +7,7 @@ import time
 ffmpeg = utils.get_ffmpeg()
 
 class GUI:
-    def __init__(self, title, width, height):
+    def __init__(self, title, width, height, console):
         # colors (higher the number the brighter)
         bg0 = "#181A1B" #black darker (console bg)
         bg1="#26292C"  #black (root, label bg)
@@ -21,22 +21,13 @@ class GUI:
         self.root = tk.Tk()
         self.root.title(title)
         self.root.configure(bg=bg1)
-        #removing title bar
-        self.root.overrideredirect(True)
         self.center_window(width,height)
 
         self.filepath = None
         # Track start time
         self.start_time = None
         self.timer_running = False
-
-
-        # -------- TITLE BAR FRAME (Buttons) --------
-        title_frame = tk.Frame(self.root, relief="raised", bg=bg1)
-        title_frame.pack(fill="x")
-
-        title_label = tk.Label(title_frame, text="Nameless Convertor", bg=bg1, fg=text1)
-        title_label.pack(side="left", pady=4, padx=3)
+        self.command = None
 
         # -------- TOP FRAME (Buttons) --------
         top_frame = tk.Frame(self.root, bg=bg1)
@@ -56,6 +47,11 @@ class GUI:
         self.console.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         self.console.config(state="disabled")
 
+        if console:
+            self.command_entry = tk.Entry(middle_frame, bg=bgbutton0, fg=text1, insertbackground=text1, relief=tk.FLAT)
+            self.command_entry.pack(fill=tk.X, padx=10, pady=(0, 10))
+            self.command_entry.bind("<Return>", self.cmd)
+
         # -------- BOTTOM FRAME (Console Area) --------
         bottom_frame = tk.Frame(self.root, bg=bg1)
         bottom_frame.pack(fill=tk.X, padx=5, pady=5)
@@ -65,7 +61,6 @@ class GUI:
 
 # -----------------------------------------------------
 
-    # Window centering method
     def center_window(self, width, height):
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
@@ -75,7 +70,10 @@ class GUI:
 
         self.root.geometry(f"{width}x{height}+{x}+{y}")
     
-    def start_conversion(self):
+    def start_conversion(self, option=None):
+        if option is None:
+            option = 0
+
         if not self.filepath:
             self.log("No file selected.")
             return
@@ -83,38 +81,64 @@ class GUI:
         self.timer_running = False
         self.stopwatch_label.config(text="Time: 0.000")
 
-        # Start timer
         self.start_time = time.time()
         self.timer_running = True
         self.update_timer()
 
-        # Start background thread for conversion
-        thread = threading.Thread(target=self.convert_file)
+        actions = {
+            0: self.convert_file,
+            1: self.commandline_convert
+        }
+
+        action = actions.get(option)
+
+        thread = threading.Thread(target=action)
         thread.start()
 
     def update_timer(self):
         if self.timer_running:
             self.elapsed = time.time() - self.start_time
             self.stopwatch_label.config(text=f"Time: {self.elapsed:.3f}")
-            self.root.after(10, self.update_timer)  # Update every 10ms.
+            self.root.after(10, self.update_timer)
         
-
+    def cmd(self, event=None):
+        self.command = self.command_entry.get().strip()
+        if not self.command:
+            return
+        
+        self.command = self.command.split()
+        if self.command[0] == 'ffmpeg':
+            if not self.filepath:
+                self.log("No file selected.")
+                return
+            
+            self.log(f"➜ {self.command}\n")
+            self.console.see(tk.END)
+            self.command_entry.delete(0, tk.END)
+            self.start_conversion(option=1)
 
 ## Object Methods ##
+
+    def commandline_convert(self):
+            result = utils.cmd_convert(self.command, self.filepath, ffmpeg)
+            self.log(result)
+
+            # Stop timer
+            self.timer_running = False
+            self.log(f"Conversion finished in {self.elapsed:.3f} seconds\n")
+
     def select_file(self):
         self.filepath = filedialog.askopenfilename(
             initialdir = utils.defualt_path(),
             title = "Select a file",
             filetypes = (("Supported files", "*.mkv *.mp4 *.m4v *.mov"), ("All files", "*.*")))
    
-        if self.filepath:
+        if self.filepath and self.filepath != '()':
             self.log(f"Selected: {self.filepath}")
-        else:
-            self.log("Select a file")
 
     def convert_file(self):
-        # arg (input_file, file_format. ffmpeg_path)
-        result = utils.convert_video(self.filepath, '.mp4', ffmpeg)
+        
+        result = utils.convert_video(self.filepath, 'mp4', ffmpeg)
         self.log(result)
 
         # Stop timer
